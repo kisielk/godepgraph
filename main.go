@@ -24,12 +24,11 @@ func init() {
 }
 
 func processPackage(root string, pkgName string) error {
-	pkg, err := build.Import(pkgName, root, 0)
-
 	if ignored[pkgName] {
 		return nil
 	}
 
+	pkg, err := build.Import(pkgName, root, 0)
 	if err != nil {
 		return fmt.Errorf("failed to import %s: %s", pkgName, err)
 	}
