@@ -12,6 +12,10 @@ var (
 	pkgs   map[string]*build.Package
 	ids    map[string]int
 	nextId int
+
+	ignored = map[string]bool{
+		"C": true,
+	}
 )
 
 func init() {
@@ -21,6 +25,10 @@ func init() {
 
 func processPackage(root string, pkgName string) error {
 	pkg, err := build.Import(pkgName, root, 0)
+
+	if ignored[pkgName] {
+		return nil
+	}
 
 	if err != nil {
 		return fmt.Errorf("failed to import %s: %s", pkgName, err)
@@ -94,6 +102,10 @@ func main() {
 		}
 
 		for _, imp := range pkg.Imports {
+			if ignored[imp] {
+				continue
+			}
+
 			impPkg := pkgs[imp]
 			if impPkg.Goroot && *ignoreStdlib {
 				continue
