@@ -33,7 +33,7 @@ Example
 -------
 Here's some example output for a component of Gary Burd's [gopkgdoc][gopkgdoc] project:
 
-![Example output](example.svg)
+![Example output](example.png)
 
 [graphviz]: http://graphviz.org
 [gopkgdoc]: https://github.com/garyburd/gopkgdoc
