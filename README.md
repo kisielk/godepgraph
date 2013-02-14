@@ -8,6 +8,7 @@ Install
 
     go get github.com/kisielk/godepgraph
 
+
 Use
 ---
 
@@ -28,4 +29,12 @@ If you want to ignore standard library packages entirely, use the -s flag:
 
     godepgraph -s github.com/kisielk/godepgraph
 
+Example
+-------
+Here's some example output for a component of Gary Burd's [gopkgdoc][gopkgdoc] project:
+
+![Example output](example.svg)
+
 [graphviz]: http://graphviz.org
+[gopkgdoc]: https://github.com/garyburd/gopkgdoc
+
