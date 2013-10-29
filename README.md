@@ -22,6 +22,14 @@ graphviz tools installed you can render it by piping the output to dot:
 By default godepgraph will display packages in the standard library in the
 graph, though it will not delve in to their dependencies.
 
+## Colors
+
+godepgraph uses a simple color scheme to denote different types of packages:
+
+  * *green*: a package that is part of the Go standard library, installed in `$GOROOT`.
+  * *blue*: a regular Go package found in `$GOPATH`.
+  * *orange*: a package found in `$GOPATH` that uses cgo by importing the special package "C".
+
 ## Ignoring Imports
 
 ### The Go Standard Library

@@ -63,6 +63,8 @@ func main() {
 		var color string
 		if pkg.Goroot {
 			color = "palegreen"
+		} else if len(pkg.CgoFiles) > 0 {
+			color = "darkgoldenrod1"
 		} else {
 			color = "paleturquoise"
 		}
