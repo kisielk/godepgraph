@@ -22,6 +22,9 @@ var (
 	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the go standard library")
 	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
 	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
+	leafColor      = flag.String("rootcolor", "lightsteelblue", "root node color")
+	rootColor      = flag.String("leafcolor", "steelblue", "leaf node color")
+	cgoColor       = flag.String("cgocolor", "darkgoldenrod1", "cgo node color")
 )
 
 func main() {
@@ -53,6 +56,7 @@ func main() {
 	}
 
 	fmt.Println("digraph godep {")
+	fmt.Println(`node [fontcolor="white" style="filled" shape="box" width="1" height="0.5" fontname="sans"]`)
 	for pkgName, pkg := range pkgs {
 		pkgId := getId(pkgName)
 
@@ -62,14 +66,14 @@ func main() {
 
 		var color string
 		if pkg.Goroot {
-			color = "palegreen"
+			color = *rootColor
 		} else if len(pkg.CgoFiles) > 0 {
-			color = "darkgoldenrod1"
+			color = *cgoColor
 		} else {
-			color = "paleturquoise"
+			color = *leafColor
 		}
 
-		fmt.Printf("%d [label=\"%s\" style=\"filled\" color=\"%s\"];\n", pkgId, pkgName, color)
+		fmt.Printf("%d [label=\"%s\" color=\"%s\"];\n", pkgId, pkgName, color)
 
 		// Don't render imports from packages in Goroot
 		if pkg.Goroot {
