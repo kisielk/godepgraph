@@ -22,7 +22,7 @@ var (
 	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the go standard library")
 	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
 	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
-	tagList        = flag.String("t", "", "a comma-separated list of build tags to consider satisified during the build")
+	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
 	buildTags []string
 
 	buildContext = build.Default
