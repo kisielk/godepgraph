@@ -22,6 +22,10 @@ var (
 	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the go standard library")
 	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
 	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
+	tagList        = flag.String("t", "", "a comma-separated list of build tags to consider satisified during the build")
+	buildTags []string
+
+	buildContext = build.Default
 )
 
 func main() {
@@ -43,6 +47,10 @@ func main() {
 			ignored[p] = true
 		}
 	}
+	if *tagList != "" {
+		buildTags = strings.Split(*tagList, ",")
+	}
+	buildContext.BuildTags = buildTags
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -94,7 +102,7 @@ func processPackage(root string, pkgName string) error {
 		return nil
 	}
 
-	pkg, err := build.Import(pkgName, root, 0)
+	pkg, err := buildContext.Import(pkgName, root, 0)
 	if err != nil {
 		return fmt.Errorf("failed to import %s: %s", pkgName, err)
 	}
