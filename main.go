@@ -19,11 +19,12 @@ var (
 	}
 	ignoredPrefixes []string
 
-	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the go standard library")
+	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the Go standard library")
+	delveGoroot    = flag.Bool("d", false, "show dependencies of packages in the Go standard library")
 	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
 	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
 	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
-	buildTags []string
+	buildTags      []string
 
 	buildContext = build.Default
 )
@@ -80,7 +81,7 @@ func main() {
 		fmt.Printf("%d [label=\"%s\" style=\"filled\" color=\"%s\"];\n", pkgId, pkgName, color)
 
 		// Don't render imports from packages in Goroot
-		if pkg.Goroot {
+		if pkg.Goroot && !*delveGoroot {
 			continue
 		}
 
@@ -114,7 +115,7 @@ func processPackage(root string, pkgName string) error {
 	pkgs[pkg.ImportPath] = pkg
 
 	// Don't worry about dependencies for stdlib packages
-	if pkg.Goroot {
+	if pkg.Goroot && !*delveGoroot {
 		return nil
 	}
 
