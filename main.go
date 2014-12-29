@@ -24,6 +24,7 @@ var (
 	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
 	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
 	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
+	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
 	buildTags      []string
 
 	buildContext = build.Default
@@ -62,6 +63,9 @@ func main() {
 	}
 
 	fmt.Println("digraph godep {")
+	if *horizontal {
+		fmt.Println(`rankdir="LR"`)
+	}
 	for pkgName, pkg := range pkgs {
 		pkgId := getId(pkgName)
 
