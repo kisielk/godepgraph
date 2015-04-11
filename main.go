@@ -22,6 +22,7 @@ var (
 	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the go standard library")
 	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
 	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
+	includeTests   = flag.Bool("t", false, "include test packages")
 )
 
 func main() {
@@ -76,7 +77,7 @@ func main() {
 			continue
 		}
 
-		for _, imp := range pkg.Imports {
+		for _, imp := range getImports(pkg) {
 			impPkg := pkgs[imp]
 			if impPkg == nil || isIgnored(impPkg) {
 				continue
@@ -110,7 +111,7 @@ func processPackage(root string, pkgName string) error {
 		return nil
 	}
 
-	for _, imp := range pkg.Imports {
+	for _, imp := range getImports(pkg) {
 		if _, ok := pkgs[imp]; !ok {
 			if err := processPackage(root, imp); err != nil {
 				return err
@@ -118,6 +119,28 @@ func processPackage(root string, pkgName string) error {
 		}
 	}
 	return nil
+}
+
+func getImports(pkg *build.Package) []string {
+	allImports := pkg.Imports
+	if *includeTests {
+		allImports = append(allImports, pkg.TestImports...)
+		allImports = append(allImports, pkg.XTestImports...)
+	}
+	var imports []string
+	found := make(map[string]struct{})
+	for _, imp := range allImports {
+		if imp == pkg.ImportPath {
+			// Don't draw a self-reference when foo_test depends on foo.
+			continue
+		}
+		if _, ok := found[imp]; ok {
+			continue
+		}
+		found[imp] = struct{}{}
+		imports = append(imports, imp)
+	}
+	return imports
 }
 
 func getId(name string) int {
