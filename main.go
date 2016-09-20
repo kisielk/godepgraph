@@ -6,6 +6,7 @@ import (
 	"go/build"
 	"log"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -67,7 +68,16 @@ func main() {
 	if *horizontal {
 		fmt.Println(`rankdir="LR"`)
 	}
-	for pkgName, pkg := range pkgs {
+
+	// sort packages
+	pkgKeys := []string{}
+	for k := range pkgs {
+		pkgKeys = append(pkgKeys, k)
+	}
+	sort.Strings(pkgKeys)
+
+	for _, pkgName := range pkgKeys {
+		pkg := pkgs[pkgName]
 		pkgId := getId(pkgName)
 
 		if isIgnored(pkg) {
