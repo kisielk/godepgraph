@@ -93,7 +93,7 @@ func main() {
 			color = "paleturquoise"
 		}
 
-		fmt.Printf("%d [label=\"%s\" style=\"filled\" color=\"%s\"];\n", pkgId, pkgName, color)
+		fmt.Printf("_%d [label=\"%s\" style=\"filled\" color=\"%s\"];\n", pkgId, pkgName, color)
 
 		// Don't render imports from packages in Goroot
 		if pkg.Goroot && !*delveGoroot {
@@ -107,7 +107,7 @@ func main() {
 			}
 
 			impId := getId(imp)
-			fmt.Printf("%d -> %d;\n", pkgId, impId)
+			fmt.Printf("_%d -> _%d;\n", pkgId, impId)
 		}
 	}
 	fmt.Println("}")
