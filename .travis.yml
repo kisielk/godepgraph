@@ -9,4 +9,4 @@ matrix:
     - go: tip
 
 script:
-  - godepraph github.com/kisielk/godepgraph | diff -u expected.txt -
+  - godepgraph github.com/kisielk/godepgraph | diff -u expected.txt -
