@@ -1,0 +1,17 @@
+digraph godep {
+_0 [label="flag" style="filled" color="palegreen"];
+_1 [label="fmt" style="filled" color="palegreen"];
+_2 [label="github.com/kisielk/godepgraph" style="filled" color="paleturquoise"];
+_2 -> _0;
+_2 -> _1;
+_2 -> _3;
+_2 -> _4;
+_2 -> _5;
+_2 -> _6;
+_2 -> _7;
+_3 [label="go/build" style="filled" color="palegreen"];
+_4 [label="log" style="filled" color="palegreen"];
+_5 [label="os" style="filled" color="palegreen"];
+_6 [label="sort" style="filled" color="palegreen"];
+_7 [label="strings" style="filled" color="palegreen"];
+}

@@ -8,5 +8,5 @@ matrix:
     - go: 1.7
     - go: tip
 
-# script:
-#  - go test -race ./...
+script:
+  - godepraph github.com/kisielk/godepgraph | diff -u expected.txt -
