@@ -1,4 +1,4 @@
-# godepgrah
+# godepgraph
 
 godepgraph is a program for generating a dependency graph of Go packages.
 
