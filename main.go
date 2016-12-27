@@ -20,13 +20,14 @@ var (
 	}
 	ignoredPrefixes []string
 
-	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the Go standard library")
-	delveGoroot    = flag.Bool("d", false, "show dependencies of packages in the Go standard library")
-	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
-	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
-	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
-	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
-	includeTests   = flag.Bool("t", false, "include test packages")
+	ignoreStdlib       = flag.Bool("s", false, "ignore packages in the Go standard library")
+	delveGoroot        = flag.Bool("d", false, "show dependencies of packages in the Go standard library")
+	ignorePrefixes     = flag.String("p", "", "a comma-separated list of prefixes to ignore")
+	ignorePackages     = flag.String("i", "", "a comma-separated list of packages to ignore")
+	tagList            = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
+	horizontal         = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
+	includeTests       = flag.Bool("t", false, "include test packages")
+	ignoreImportErrors = flag.Bool("x", false, "ignore import errors")
 
 	buildTags    []string
 	buildContext = build.Default
@@ -119,7 +120,7 @@ func processPackage(root string, pkgName string) error {
 	}
 
 	pkg, err := buildContext.Import(pkgName, root, 0)
-	if err != nil {
+	if err != nil && !*ignoreImportErrors {
 		return fmt.Errorf("failed to import %s: %s", pkgName, err)
 	}
 
