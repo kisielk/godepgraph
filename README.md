@@ -11,7 +11,7 @@ godepgraph is a program for generating a dependency graph of Go packages.
 
 ## Use
 
-For basic usage, just give the package importing path of interest as the first
+For basic usage, just give the package import path of interest as the first
 argument:
 
     godepgraph github.com/kisielk/godepgraph
