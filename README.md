@@ -59,15 +59,10 @@ list of prefixes:
 ### As part of larger project (e.g. Docker):
 
 ```
-mkdir -p go2/src/github.com/docker
-export GOPATH=~/go2
-cd go2/src/github.com/docker
-git clone git@github.com:moby/moby.git docker
-cd docker/
-pwd
-go get github.com/resin-io-playground/godepgraph
-godepgraph github.com/docker/docker/cmd/dockerd
- ../../../../bin/godepgraph github.com/docker/docker/cmd/dockerd  | wc
+go get github.com/kisielk/godepgraph
+go get github.com/moby/moby.git
+cd src/moby/moby
+godepgraph github.com/moby/docker/cmd/dockerd
 ```
 
 Example
