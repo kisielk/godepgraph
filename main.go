@@ -19,11 +19,13 @@ var (
 		"C": true,
 	}
 	ignoredPrefixes []string
+	onlyPrefixes    []string
 
 	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the Go standard library")
 	delveGoroot    = flag.Bool("d", false, "show dependencies of packages in the Go standard library")
 	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
 	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
+	onlyPrefix     = flag.String("o", "", "a comma-separated list of prefixes to include")
 	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
 	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
 	includeTests   = flag.Bool("t", false, "include test packages")
@@ -45,6 +47,9 @@ func main() {
 
 	if *ignorePrefixes != "" {
 		ignoredPrefixes = strings.Split(*ignorePrefixes, ",")
+	}
+	if *onlyPrefix != "" {
+		onlyPrefixes = strings.Split(*onlyPrefix, ",")
 	}
 	if *ignorePackages != "" {
 		for _, p := range strings.Split(*ignorePackages, ",") {
@@ -186,6 +191,9 @@ func hasPrefixes(s string, prefixes []string) bool {
 }
 
 func isIgnored(pkg *build.Package) bool {
+	if len(onlyPrefixes) > 0 && !hasPrefixes(pkg.ImportPath, onlyPrefixes) {
+		return true
+	}
 	return ignored[pkg.ImportPath] || (pkg.Goroot && *ignoreStdlib) || hasPrefixes(pkg.ImportPath, ignoredPrefixes)
 }
 
