@@ -29,6 +29,7 @@ var (
 	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
 	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
 	includeTests   = flag.Bool("t", false, "include test packages")
+	maxLevel       = flag.Int("l", 256, "max level of go dependency graph")
 
 	buildTags    []string
 	buildContext = build.Default
@@ -65,7 +66,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to get cwd: %s", err)
 	}
-	if err := processPackage(cwd, args[0]); err != nil {
+	if err := processPackage(cwd, args[0], 0); err != nil {
 		log.Fatal(err)
 	}
 
@@ -118,7 +119,10 @@ func main() {
 	fmt.Println("}")
 }
 
-func processPackage(root string, pkgName string) error {
+func processPackage(root string, pkgName string, level int) error {
+	if level++; level > *maxLevel {
+		return nil
+	}
 	if ignored[pkgName] {
 		return nil
 	}
@@ -141,7 +145,7 @@ func processPackage(root string, pkgName string) error {
 
 	for _, imp := range getImports(pkg) {
 		if _, ok := pkgs[imp]; !ok {
-			if err := processPackage(root, imp); err != nil {
+			if err := processPackage(root, imp, level); err != nil {
 				return err
 			}
 		}
