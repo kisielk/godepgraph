@@ -11,7 +11,7 @@ godepgraph is a program for generating a dependency graph of Go packages.
 
 ## Use
 
-For basic usage, just give the package path of interest as the first
+For basic usage, just give the package import path of interest as the first
 argument:
 
     godepgraph github.com/kisielk/godepgraph
@@ -56,7 +56,14 @@ list of prefixes:
 
     godepgraph -p github.com,launchpad.net bitbucket.org/foo/bar
 
+### As part of larger project (e.g. Docker):
 
+```
+go get github.com/kisielk/godepgraph
+go get github.com/moby/moby.git
+cd src/moby/moby
+godepgraph github.com/moby/docker/cmd/dockerd
+```
 
 Example
 -------
