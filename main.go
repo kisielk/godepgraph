@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
+	"io"
 	"log"
 	"os"
 	"sort"
@@ -15,29 +16,53 @@ var (
 	ids    map[string]int
 	nextId int
 
-	ignored = map[string]bool{
-		"C": true,
-	}
+	ignored         map[string]bool
 	ignoredPrefixes []string
 	onlyPrefixes    []string
 
-	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the Go standard library")
-	delveGoroot    = flag.Bool("d", false, "show dependencies of packages in the Go standard library")
-	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
-	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
-	onlyPrefix     = flag.String("o", "", "a comma-separated list of prefixes to include")
-	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
-	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
-	includeTests   = flag.Bool("t", false, "include test packages")
-	maxLevel       = flag.Int("l", 256, "max level of go dependency graph")
+	ignoreStdlib   = new(bool)
+	delveGoroot    = new(bool)
+	ignorePrefixes = new(string)
+	ignorePackages = new(string)
+	onlyPrefix     = new(string)
+	tagList        = new(string)
+	horizontal     = new(bool)
+	includeTests   = new(bool)
+	maxLevel       = new(int)
 
 	buildTags    []string
-	buildContext = build.Default
+	buildContext           = build.Default
+	output       io.Writer = os.Stdout
 )
 
+func init() {
+	flag.BoolVar(ignoreStdlib, "s", false, "ignore packages in the Go standard library")
+	flag.BoolVar(delveGoroot, "d", false, "show dependencies of packages in the Go standard library")
+	flag.StringVar(ignorePrefixes, "p", "", "a comma-separated list of prefixes to ignore")
+	flag.StringVar(ignorePackages, "i", "", "a comma-separated list of packages to ignore")
+	flag.StringVar(onlyPrefix, "o", "", "a comma-separated list of prefixes to include")
+	flag.StringVar(tagList, "tags", "", "a comma-separated list of build tags to consider satisified during the build")
+	flag.BoolVar(horizontal, "horizontal", false, "lay out the dependency graph horizontally instead of vertically")
+	flag.BoolVar(includeTests, "t", false, "include test packages")
+	flag.IntVar(maxLevel, "l", 256, "max level of go dependency graph")
+}
+
 func main() {
+	nextId = 0
+	ignored = map[string]bool{
+		"C": true,
+	}
 	pkgs = make(map[string]*build.Package)
 	ids = make(map[string]int)
+	*ignoreStdlib = false
+	*delveGoroot = false
+	*ignorePrefixes = ""
+	*ignorePackages = ""
+	*onlyPrefix = ""
+	*tagList = ""
+	*horizontal = false
+	*includeTests = false
+	*maxLevel = 256
 	flag.Parse()
 
 	args := flag.Args()
@@ -70,9 +95,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Println("digraph godep {")
+	println("digraph godep {")
 	if *horizontal {
-		fmt.Println(`rankdir="LR"`)
+		println(`rankdir="LR"`)
 	}
 
 	// sort packages
@@ -85,7 +110,7 @@ func main() {
 	for _, pkgName := range pkgKeys {
 		pkg := pkgs[pkgName]
 		pkgId := getId(pkgName)
-
+		pkgUrl := ""
 		if isIgnored(pkg) {
 			continue
 		}
@@ -96,11 +121,14 @@ func main() {
 		} else if len(pkg.CgoFiles) > 0 {
 			color = "darkgoldenrod1"
 		} else {
+			pkgUrl = getUrl(pkgName)
 			color = "paleturquoise"
 		}
-
-		fmt.Printf("_%d [label=\"%s\" style=\"filled\" color=\"%s\"];\n", pkgId, pkgName, color)
-
+		if pkgUrl == "" {
+			printf("_%d [label=\"%s\" style=\"filled\" color=\"%s\"];\n", pkgId, pkgName, color)
+		} else {
+			printf("_%d [label=\"%s\" style=\"filled\" color=\"%s\" URL=\"%s\" target=\"_top\"];\n", pkgId, pkgName, color, pkgUrl)
+		}
 		// Don't render imports from packages in Goroot
 		if pkg.Goroot && !*delveGoroot {
 			continue
@@ -113,10 +141,10 @@ func main() {
 			}
 
 			impId := getId(imp)
-			fmt.Printf("_%d -> _%d;\n", pkgId, impId)
+			printf("_%d -> _%d;\n", pkgId, impId)
 		}
 	}
-	fmt.Println("}")
+	println("}")
 }
 
 func processPackage(root string, pkgName string, level int) error {
@@ -185,6 +213,19 @@ func getId(name string) int {
 	return id
 }
 
+func getUrl(name string) (url string) {
+	if !strings.HasPrefix(name, "github.") {
+		url = fmt.Sprintf("https://godoc.org/%s", name)
+		return
+	}
+	tokens := strings.Split(name, "/")
+	if len(tokens) < 3 {
+		return
+	}
+	url = fmt.Sprintf("https://%s/%s/%s", tokens[0], tokens[1], tokens[2])
+	return
+}
+
 func hasPrefixes(s string, prefixes []string) bool {
 	for _, p := range prefixes {
 		if strings.HasPrefix(s, p) {
@@ -201,10 +242,10 @@ func isIgnored(pkg *build.Package) bool {
 	return ignored[pkg.ImportPath] || (pkg.Goroot && *ignoreStdlib) || hasPrefixes(pkg.ImportPath, ignoredPrefixes)
 }
 
-func debug(args ...interface{}) {
-	fmt.Fprintln(os.Stderr, args...)
+func printf(format string, args ...interface{}) {
+	fmt.Fprintf(output, format, args...)
 }
 
-func debugf(s string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, s, args...)
+func println(args ...interface{}) {
+	fmt.Fprintln(output, args...)
 }
