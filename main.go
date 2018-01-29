@@ -67,7 +67,7 @@ func main() {
 		log.Fatalf("failed to get cwd: %s", err)
 	}
 	for _, a := range args {
-		if err := processPackage(cwd, a, 0); err != nil {
+		if err := processPackage(cwd, a, 0, ""); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -121,7 +121,7 @@ func main() {
 	fmt.Println("}")
 }
 
-func processPackage(root string, pkgName string, level int) error {
+func processPackage(root string, pkgName string, level int, importedBy string) error {
 	if level++; level > *maxLevel {
 		return nil
 	}
@@ -131,7 +131,7 @@ func processPackage(root string, pkgName string, level int) error {
 
 	pkg, err := buildContext.Import(pkgName, root, 0)
 	if err != nil {
-		return fmt.Errorf("failed to import %s: %s", pkgName, err)
+		return fmt.Errorf("failed to import %s (imported at level %d by %s): %s", pkgName, level, importedBy, err)
 	}
 
 	if isIgnored(pkg) {
@@ -147,7 +147,7 @@ func processPackage(root string, pkgName string, level int) error {
 
 	for _, imp := range getImports(pkg) {
 		if _, ok := pkgs[imp]; !ok {
-			if err := processPackage(pkg.Dir, imp, level); err != nil {
+			if err := processPackage(pkg.Dir, imp, level, pkgName); err != nil {
 				return err
 			}
 		}
