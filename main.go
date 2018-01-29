@@ -21,15 +21,16 @@ var (
 	ignoredPrefixes []string
 	onlyPrefixes    []string
 
-	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the Go standard library")
-	delveGoroot    = flag.Bool("d", false, "show dependencies of packages in the Go standard library")
-	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
-	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
-	onlyPrefix     = flag.String("o", "", "a comma-separated list of prefixes to include")
-	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
-	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
-	includeTests   = flag.Bool("t", false, "include test packages")
-	maxLevel       = flag.Int("l", 256, "max level of go dependency graph")
+	ignoreStdlib    = flag.Bool("s", false, "ignore packages in the Go standard library")
+	ignoreImportErr = flag.Bool("e", false, "ignore package import errors")
+	delveGoroot     = flag.Bool("d", false, "show dependencies of packages in the Go standard library")
+	ignorePrefixes  = flag.String("p", "", "a comma-separated list of prefixes to ignore")
+	ignorePackages  = flag.String("i", "", "a comma-separated list of packages to ignore")
+	onlyPrefix      = flag.String("o", "", "a comma-separated list of prefixes to include")
+	tagList         = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
+	horizontal      = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
+	includeTests    = flag.Bool("t", false, "include test packages")
+	maxLevel        = flag.Int("l", 256, "max level of go dependency graph")
 
 	buildTags    []string
 	buildContext = build.Default
@@ -67,7 +68,7 @@ func main() {
 		log.Fatalf("failed to get cwd: %s", err)
 	}
 	for _, a := range args {
-		if err := processPackage(cwd, a, 0, ""); err != nil {
+		if err := processPackage(cwd, a, 0, "", *ignoreImportErr); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -121,7 +122,7 @@ func main() {
 	fmt.Println("}")
 }
 
-func processPackage(root string, pkgName string, level int, importedBy string) error {
+func processPackage(root string, pkgName string, level int, importedBy string, ignoreErrors bool) error {
 	if level++; level > *maxLevel {
 		return nil
 	}
@@ -130,7 +131,9 @@ func processPackage(root string, pkgName string, level int, importedBy string) e
 	}
 
 	pkg, err := buildContext.Import(pkgName, root, 0)
-	if err != nil {
+	if ignoreErrors {
+		// TODO: mark the package so that it is rendered with a different color
+	} else if err != nil {
 		return fmt.Errorf("failed to import %s (imported at level %d by %s): %s", pkgName, level, importedBy, err)
 	}
 
@@ -147,7 +150,7 @@ func processPackage(root string, pkgName string, level int, importedBy string) e
 
 	for _, imp := range getImports(pkg) {
 		if _, ok := pkgs[imp]; !ok {
-			if err := processPackage(pkg.Dir, imp, level, pkgName); err != nil {
+			if err := processPackage(pkg.Dir, imp, level, pkgName, ignoreErrors); err != nil {
 				return err
 			}
 		}
