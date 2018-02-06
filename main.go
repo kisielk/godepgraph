@@ -136,7 +136,7 @@ func processPackage(root string, pkgName string, level int) error {
 		return nil
 	}
 
-	pkgs[pkg.ImportPath] = pkg
+	pkgs[normalizeVendor(pkg.ImportPath)] = pkg
 
 	// Don't worry about dependencies for stdlib packages
 	if pkg.Goroot && !*delveGoroot {
@@ -162,7 +162,7 @@ func getImports(pkg *build.Package) []string {
 	var imports []string
 	found := make(map[string]struct{})
 	for _, imp := range allImports {
-		if imp == pkg.ImportPath {
+		if imp == normalizeVendor(pkg.ImportPath) {
 			// Don't draw a self-reference when foo_test depends on foo.
 			continue
 		}
@@ -195,10 +195,10 @@ func hasPrefixes(s string, prefixes []string) bool {
 }
 
 func isIgnored(pkg *build.Package) bool {
-	if len(onlyPrefixes) > 0 && !hasPrefixes(pkg.ImportPath, onlyPrefixes) {
+	if len(onlyPrefixes) > 0 && !hasPrefixes(normalizeVendor(pkg.ImportPath), onlyPrefixes) {
 		return true
 	}
-	return ignored[pkg.ImportPath] || (pkg.Goroot && *ignoreStdlib) || hasPrefixes(pkg.ImportPath, ignoredPrefixes)
+	return ignored[normalizeVendor(pkg.ImportPath)] || (pkg.Goroot && *ignoreStdlib) || hasPrefixes(normalizeVendor(pkg.ImportPath), ignoredPrefixes)
 }
 
 func debug(args ...interface{}) {
@@ -207,4 +207,9 @@ func debug(args ...interface{}) {
 
 func debugf(s string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, s, args...)
+}
+
+func normalizeVendor(path string) string {
+	pieces := strings.Split(path, "vendor/")
+	return pieces[len(pieces) - 1]
 }
