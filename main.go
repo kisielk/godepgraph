@@ -42,7 +42,7 @@ func main() {
 
 	args := flag.Args()
 
-	if len(args) != 1 {
+	if len(args) < 1 {
 		log.Fatal("need one package name to process")
 	}
 
@@ -66,8 +66,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to get cwd: %s", err)
 	}
-	if err := processPackage(cwd, args[0], 0); err != nil {
-		log.Fatal(err)
+	for _, a := range args {
+		if err := processPackage(cwd, a, 0); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	fmt.Println("digraph godep {")
