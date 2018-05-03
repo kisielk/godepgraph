@@ -42,7 +42,7 @@ If you want to ignore standard library packages entirely, use the -s flag:
 
 ### By Name
 
-Import paths can be included in a comma-separated list passed to the -i flag:
+Import paths can be ignored in a comma-separated list passed to the -i flag:
 
     godepgraph -i github.com/foo/bar,github.com/baz/blah github.com/something/else
 
