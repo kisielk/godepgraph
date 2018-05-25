@@ -147,7 +147,7 @@ func processPackage(root string, pkgName string, level int) error {
 
 	for _, imp := range getImports(pkg) {
 		if _, ok := pkgs[imp]; !ok {
-			if err := processPackage(root, imp, level); err != nil {
+			if err := processPackage(pkg.Dir, imp, level); err != nil {
 				return err
 			}
 		}
