@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	pkgs   map[string]*build.Package
-	ids    map[string]int
-	nextId int
+	pkgs map[string]*build.Package
+	ids  map[string]string
 
 	ignored = map[string]bool{
 		"C": true,
@@ -38,7 +37,7 @@ var (
 
 func main() {
 	pkgs = make(map[string]*build.Package)
-	ids = make(map[string]int)
+	ids = make(map[string]string)
 	flag.Parse()
 
 	args := flag.Args()
@@ -102,7 +101,7 @@ func main() {
 			color = "paleturquoise"
 		}
 
-		fmt.Printf("_%d [label=\"%s\" style=\"filled\" color=\"%s\"];\n", pkgId, pkgName, color)
+		fmt.Printf("%s [label=\"%s\" style=\"filled\" color=\"%s\"];\n", pkgId, pkgName, color)
 
 		// Don't render imports from packages in Goroot
 		if pkg.Goroot && !*delveGoroot {
@@ -116,7 +115,7 @@ func main() {
 			}
 
 			impId := getId(imp)
-			fmt.Printf("_%d -> _%d;\n", pkgId, impId)
+			fmt.Printf("%s -> %s;\n", pkgId, impId)
 		}
 	}
 	fmt.Println("}")
@@ -180,11 +179,16 @@ func getImports(pkg *build.Package) []string {
 	return imports
 }
 
-func getId(name string) int {
+func deriveNodeID(packageName string) string {
+	//TODO: improve implementation?
+	id := "\"" + packageName + "\""
+	return id
+}
+
+func getId(name string) string {
 	id, ok := ids[name]
 	if !ok {
-		id = nextId
-		nextId++
+		id = deriveNodeID(name)
 		ids[name] = id
 	}
 	return id
