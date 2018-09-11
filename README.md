@@ -29,6 +29,7 @@ godepgraph uses a simple color scheme to denote different types of packages:
 
   * *green*: a package that is part of the Go standard library, installed in `$GOROOT`.
   * *blue*: a regular Go package found in `$GOPATH`.
+  * *yellow*: a vendored Go package found in `$GOPATH`.
   * *orange*: a package found in `$GOPATH` that uses cgo by importing the special package "C".
 
 ## Ignoring Imports
@@ -61,10 +62,8 @@ list of prefixes:
 
     godepgraph -p github.com,launchpad.net bitbucket.org/foo/bar
 
+## Example
 
-
-Example
--------
 Here's some example output for a component of Gary Burd's [gopkgdoc][gopkgdoc] project:
 
 ![Example output](example.png)

@@ -98,6 +98,8 @@ func main() {
 			color = "palegreen"
 		} else if len(pkg.CgoFiles) > 0 {
 			color = "darkgoldenrod1"
+		} else if isVendored(pkg.ImportPath) {
+			color = "palegoldenrod"
 		} else {
 			color = "paleturquoise"
 		}
