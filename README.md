@@ -8,7 +8,6 @@ godepgraph is a program for generating a dependency graph of Go packages.
 
     go get github.com/kisielk/godepgraph
 
-
 ## Use
 
 For basic usage, just give the package path of interest as the first
@@ -40,6 +39,12 @@ If you want to ignore standard library packages entirely, use the -s flag:
 
     godepgraph -s github.com/kisielk/godepgraph
 
+### Vendored Libraries
+
+If you want to ignore vendored packages entirely, use the -novendor flag:
+
+    godepgraph -novendor github.com/something/else
+
 ### By Name
 
 Import paths can be ignored in a comma-separated list passed to the -i flag:
@@ -66,4 +71,3 @@ Here's some example output for a component of Gary Burd's [gopkgdoc][gopkgdoc] p
 
 [graphviz]: http://graphviz.org
 [gopkgdoc]: https://github.com/garyburd/gopkgdoc
-
