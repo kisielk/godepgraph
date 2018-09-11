@@ -77,6 +77,12 @@ func main() {
 	if *horizontal {
 		fmt.Println(`rankdir="LR"`)
 	}
+	fmt.Print(`
+splines=ortho
+nodesep=0.2
+ranksep=0.6
+node [shape="box",style="rounded,filled"]
+	`)
 
 	// sort packages
 	pkgKeys := []string{}
@@ -104,7 +110,7 @@ func main() {
 			color = "paleturquoise"
 		}
 
-		fmt.Printf("_%d [label=\"%s\" style=\"filled\" color=\"%s\"];\n", pkgId, pkgName, color)
+		fmt.Printf("_%d [label=\"%s\" color=\"%s\"];\n", pkgId, pkgName, color)
 
 		// Don't render imports from packages in Goroot
 		if pkg.Goroot && !*delveGoroot {
