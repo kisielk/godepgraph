@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	pkgs   map[string]*build.Package
-	ids    map[string]int
-	nextId int
+	pkgs map[string]*build.Package
+	ids  map[string]string
 
 	ignored = map[string]bool{
 		"C": true,
@@ -23,6 +22,7 @@ var (
 
 	ignoreStdlib   = flag.Bool("nostdlib", false, "ignore packages in the Go standard library")
 	ignoreVendor   = flag.Bool("novendor", false, "ignore packages in the vendor directory")
+	stopOnError    = flag.Bool("stoponerror", true, "stop on package import errors")
 	withGoroot     = flag.Bool("withgoroot", false, "show dependencies of packages in the Go standard library")
 	ignorePrefixes = flag.String("ignoreprefixes", "", "a comma-separated list of prefixes to ignore")
 	ignorePackages = flag.String("ignorepackages", "", "a comma-separated list of packages to ignore")
@@ -48,7 +48,7 @@ func init() {
 
 func main() {
 	pkgs = make(map[string]*build.Package)
-	ids = make(map[string]int)
+	ids = make(map[string]string)
 	flag.Parse()
 
 	args := flag.Args()
@@ -78,7 +78,7 @@ func main() {
 		log.Fatalf("failed to get cwd: %s", err)
 	}
 	for _, a := range args {
-		if err := processPackage(cwd, a, 0); err != nil {
+		if err := processPackage(cwd, a, 0, "", *stopOnError); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -87,12 +87,10 @@ func main() {
 	if *horizontal {
 		fmt.Println(`rankdir="LR"`)
 	}
-	fmt.Print(`
-splines=ortho
+	fmt.Print(`splines=ortho
 nodesep=0.2
 ranksep=0.6
-node [shape="box",style="rounded,filled"]
-	`)
+node [shape="box",style="rounded,filled"]`)
 
 	// sort packages
 	pkgKeys := []string{}
@@ -120,7 +118,7 @@ node [shape="box",style="rounded,filled"]
 			color = "paleturquoise"
 		}
 
-		fmt.Printf("_%d [label=\"%s\" color=\"%s\"];\n", pkgId, pkgName, color)
+		fmt.Printf("%s [label=\"%s\" color=\"%s\"];\n", pkgId, pkgName, color)
 
 		// Don't render imports from packages in Goroot
 		if pkg.Goroot && !*withGoroot {
@@ -134,13 +132,13 @@ node [shape="box",style="rounded,filled"]
 			}
 
 			impId := getId(imp)
-			fmt.Printf("_%d -> _%d;\n", pkgId, impId)
+			fmt.Printf("%s -> %s;\n", pkgId, impId)
 		}
 	}
 	fmt.Println("}")
 }
 
-func processPackage(root string, pkgName string, level int) error {
+func processPackage(root string, pkgName string, level int, importedBy string, stopOnError bool) error {
 	if level++; level > *maxLevel {
 		return nil
 	}
@@ -150,7 +148,11 @@ func processPackage(root string, pkgName string, level int) error {
 
 	pkg, err := buildContext.Import(pkgName, root, 0)
 	if err != nil {
-		return fmt.Errorf("failed to import %s: %s", pkgName, err)
+		if stopOnError {
+			return fmt.Errorf("failed to import %s (imported at level %d by %s): %s", pkgName, level, importedBy, err)
+		} else {
+			// TODO: mark the package so that it is rendered with a different color
+		}
 	}
 
 	if isIgnored(pkg) {
@@ -166,7 +168,7 @@ func processPackage(root string, pkgName string, level int) error {
 
 	for _, imp := range getImports(pkg) {
 		if _, ok := pkgs[imp]; !ok {
-			if err := processPackage(pkg.Dir, imp, level); err != nil {
+			if err := processPackage(pkg.Dir, imp, level, pkgName, stopOnError); err != nil {
 				return err
 			}
 		}
@@ -196,11 +198,16 @@ func getImports(pkg *build.Package) []string {
 	return imports
 }
 
-func getId(name string) int {
+func deriveNodeID(packageName string) string {
+	//TODO: improve implementation?
+	id := "\"" + packageName + "\""
+	return id
+}
+
+func getId(name string) string {
 	id, ok := ids[name]
 	if !ok {
-		id = nextId
-		nextId++
+		id = deriveNodeID(name)
 		ids[name] = id
 	}
 	return id
