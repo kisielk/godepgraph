@@ -21,20 +21,30 @@ var (
 	ignoredPrefixes []string
 	onlyPrefixes    []string
 
-	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the Go standard library")
+	ignoreStdlib   = flag.Bool("nostdlib", false, "ignore packages in the Go standard library")
 	ignoreVendor   = flag.Bool("novendor", false, "ignore packages in the vendor directory")
-	delveGoroot    = flag.Bool("d", false, "show dependencies of packages in the Go standard library")
-	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
-	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
-	onlyPrefix     = flag.String("o", "", "a comma-separated list of prefixes to include")
+	withGoroot     = flag.Bool("withgoroot", false, "show dependencies of packages in the Go standard library")
+	ignorePrefixes = flag.String("ignoreprefixes", "", "a comma-separated list of prefixes to ignore")
+	ignorePackages = flag.String("ignorepackages", "", "a comma-separated list of packages to ignore")
+	onlyPrefix     = flag.String("onlyprefixes", "", "a comma-separated list of prefixes to include")
 	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisfied during the build")
 	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
-	includeTests   = flag.Bool("t", false, "include test packages")
-	maxLevel       = flag.Int("l", 256, "max level of go dependency graph")
+	withTests      = flag.Bool("withtests", false, "include test packages")
+	maxLevel       = flag.Int("maxlevel", 256, "max level of go dependency graph")
 
 	buildTags    []string
 	buildContext = build.Default
 )
+
+func init() {
+	flag.BoolVar(ignoreStdlib, "s", false, "(alias for -nostdlib) ignore packages in the Go standard library")
+	flag.StringVar(ignorePrefixes, "p", "", "(alias for -ignoreprefixes) a comma-separated list of prefixes to ignore")
+	flag.StringVar(ignorePackages, "i", "", "(alias for -ignorepackages) a comma-separated list of packages to ignore")
+	flag.StringVar(onlyPrefix, "o", "", "(alias for -onlyprefixes) a comma-separated list of prefixes to include")
+	flag.BoolVar(withTests, "t", false, "(alias for -withtests) include test packages")
+	flag.IntVar(maxLevel, "l", 256, "(alias for -maxlevel) maximum level of the go dependency graph")
+	flag.BoolVar(withGoroot, "d", false, "(alias for -withgoroot) show dependencies of packages in the Go standard library")
+}
 
 func main() {
 	pkgs = make(map[string]*build.Package)
@@ -113,7 +123,7 @@ node [shape="box",style="rounded,filled"]
 		fmt.Printf("_%d [label=\"%s\" color=\"%s\"];\n", pkgId, pkgName, color)
 
 		// Don't render imports from packages in Goroot
-		if pkg.Goroot && !*delveGoroot {
+		if pkg.Goroot && !*withGoroot {
 			continue
 		}
 
@@ -150,7 +160,7 @@ func processPackage(root string, pkgName string, level int) error {
 	pkgs[normalizeVendor(pkg.ImportPath)] = pkg
 
 	// Don't worry about dependencies for stdlib packages
-	if pkg.Goroot && !*delveGoroot {
+	if pkg.Goroot && !*withGoroot {
 		return nil
 	}
 
@@ -166,7 +176,7 @@ func processPackage(root string, pkgName string, level int) error {
 
 func getImports(pkg *build.Package) []string {
 	allImports := pkg.Imports
-	if *includeTests {
+	if *withTests {
 		allImports = append(allImports, pkg.TestImports...)
 		allImports = append(allImports, pkg.XTestImports...)
 	}
