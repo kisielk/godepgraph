@@ -22,11 +22,12 @@ var (
 	onlyPrefixes    []string
 
 	ignoreStdlib   = flag.Bool("s", false, "ignore packages in the Go standard library")
+	ignoreVendor   = flag.Bool("novendor", false, "ignore packages in the vendor directory")
 	delveGoroot    = flag.Bool("d", false, "show dependencies of packages in the Go standard library")
 	ignorePrefixes = flag.String("p", "", "a comma-separated list of prefixes to ignore")
 	ignorePackages = flag.String("i", "", "a comma-separated list of packages to ignore")
 	onlyPrefix     = flag.String("o", "", "a comma-separated list of prefixes to include")
-	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisified during the build")
+	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisfied during the build")
 	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
 	includeTests   = flag.Bool("t", false, "include test packages")
 	maxLevel       = flag.Int("l", 256, "max level of go dependency graph")
@@ -200,6 +201,10 @@ func isIgnored(pkg *build.Package) bool {
 	if len(onlyPrefixes) > 0 && !hasPrefixes(normalizeVendor(pkg.ImportPath), onlyPrefixes) {
 		return true
 	}
+
+	if *ignoreVendor && isVendored(pkg.ImportPath) {
+		return true
+	}
 	return ignored[normalizeVendor(pkg.ImportPath)] || (pkg.Goroot && *ignoreStdlib) || hasPrefixes(normalizeVendor(pkg.ImportPath), ignoredPrefixes)
 }
 
@@ -211,7 +216,11 @@ func debugf(s string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, s, args...)
 }
 
+func isVendored(path string) bool {
+	return strings.Contains(path, "/vendor/")
+}
+
 func normalizeVendor(path string) string {
 	pieces := strings.Split(path, "vendor/")
-	return pieces[len(pieces) - 1]
+	return pieces[len(pieces)-1]
 }
