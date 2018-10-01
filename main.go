@@ -108,13 +108,14 @@ node [shape="box",style="rounded,filled"]`)
 		}
 
 		var color string
-		if pkg.Goroot {
+		switch {
+		case pkg.Goroot:
 			color = "palegreen"
-		} else if len(pkg.CgoFiles) > 0 {
+		case len(pkg.CgoFiles) > 0:
 			color = "darkgoldenrod1"
-		} else if isVendored(pkg.ImportPath) {
+		case isVendored(pkg.ImportPath):
 			color = "palegoldenrod"
-		} else {
+		default:
 			color = "paleturquoise"
 		}
 
