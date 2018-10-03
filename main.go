@@ -88,9 +88,11 @@ func main() {
 		fmt.Println(`rankdir="LR"`)
 	}
 	fmt.Print(`splines=ortho
-nodesep=0.2
-ranksep=0.6
-node [shape="box",style="rounded,filled"]`)
+nodesep=0.4
+ranksep=0.8
+node [shape="box",style="rounded,filled"]
+edge [arrowsize="0.5"]
+`)
 
 	// sort packages
 	pkgKeys := []string{}
