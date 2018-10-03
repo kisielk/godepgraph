@@ -121,7 +121,7 @@ edge [arrowsize="0.5"]
 			color = "paleturquoise"
 		}
 
-		fmt.Printf("%s [label=\"%s\" color=\"%s\"];\n", pkgId, pkgName, color)
+		fmt.Printf("%s [label=\"%s\" color=\"%s\" URL=\"%s\" target=\"_blank\"];\n", pkgId, pkgName, color, pkgURL(pkgName))
 
 		// Don't render imports from packages in Goroot
 		if pkg.Goroot && !*withGoroot {
@@ -139,6 +139,10 @@ edge [arrowsize="0.5"]
 		}
 	}
 	fmt.Println("}")
+}
+
+func pkgURL(pkgName string) string {
+	return "https://godoc.org/" + pkgName
 }
 
 func processPackage(root string, pkgName string, level int, importedBy string, stopOnError bool) error {
