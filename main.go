@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	pkgs map[string]*build.Package
-	ids  map[string]string
+	pkgs        map[string]*build.Package
+	erroredPkgs map[string]bool
+	ids         map[string]string
 
 	ignored = map[string]bool{
 		"C": true,
@@ -48,6 +49,7 @@ func init() {
 
 func main() {
 	pkgs = make(map[string]*build.Package)
+	erroredPkgs = make(map[string]bool)
 	ids = make(map[string]string)
 	flag.Parse()
 
@@ -117,11 +119,13 @@ edge [arrowsize="0.5"]
 			color = "darkgoldenrod1"
 		case isVendored(pkg.ImportPath):
 			color = "palegoldenrod"
+		case hasBuildErrors(pkg):
+			color = "red"
 		default:
 			color = "paleturquoise"
 		}
 
-		fmt.Printf("%s [label=\"%s\" color=\"%s\" URL=\"%s\" target=\"_blank\"];\n", pkgId, pkgName, color, pkgURL(pkgName))
+		fmt.Printf("%s [label=\"%s\" color=\"%s\" URL=\"%s\" target=\"_blank\"];\n", pkgId, pkgName, color, pkgDocsURL(pkgName))
 
 		// Don't render imports from packages in Goroot
 		if pkg.Goroot && !*withGoroot {
@@ -141,7 +145,7 @@ edge [arrowsize="0.5"]
 	fmt.Println("}")
 }
 
-func pkgURL(pkgName string) string {
+func pkgDocsURL(pkgName string) string {
 	return "https://godoc.org/" + pkgName
 }
 
@@ -153,12 +157,10 @@ func processPackage(root string, pkgName string, level int, importedBy string, s
 		return nil
 	}
 
-	pkg, err := buildContext.Import(pkgName, root, 0)
-	if err != nil {
+	pkg, buildErr := buildContext.Import(pkgName, root, 0)
+	if buildErr != nil {
 		if stopOnError {
-			return fmt.Errorf("failed to import %s (imported at level %d by %s): %s", pkgName, level, importedBy, err)
-		} else {
-			// TODO: mark the package so that it is rendered with a different color
+			return fmt.Errorf("failed to import %s (imported at level %d by %s):\n%s", pkgName, level, importedBy, buildErr)
 		}
 	}
 
@@ -166,7 +168,12 @@ func processPackage(root string, pkgName string, level int, importedBy string, s
 		return nil
 	}
 
-	pkgs[normalizeVendor(pkg.ImportPath)] = pkg
+	importPath := normalizeVendor(pkgName)
+	if buildErr != nil {
+		erroredPkgs[importPath] = true
+	}
+
+	pkgs[importPath] = pkg
 
 	// Don't worry about dependencies for stdlib packages
 	if pkg.Goroot && !*withGoroot {
@@ -238,6 +245,18 @@ func isIgnored(pkg *build.Package) bool {
 		return true
 	}
 	return ignored[normalizeVendor(pkg.ImportPath)] || (pkg.Goroot && *ignoreStdlib) || hasPrefixes(normalizeVendor(pkg.ImportPath), ignoredPrefixes)
+}
+
+func hasBuildErrors(pkg *build.Package) bool {
+	if len(erroredPkgs) == 0 {
+		return false
+	}
+
+	v, ok := erroredPkgs[normalizeVendor(pkg.ImportPath)]
+	if !ok {
+		return false
+	}
+	return v
 }
 
 func debug(args ...interface{}) {
