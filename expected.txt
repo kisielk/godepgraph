@@ -12,11 +12,13 @@ edge [arrowsize="0.5"]
 "github.com/kisielk/godepgraph" -> "go/build";
 "github.com/kisielk/godepgraph" -> "log";
 "github.com/kisielk/godepgraph" -> "os";
+"github.com/kisielk/godepgraph" -> "os/exec";
 "github.com/kisielk/godepgraph" -> "sort";
 "github.com/kisielk/godepgraph" -> "strings";
 "go/build" [label="go/build" color="palegreen" URL="https://godoc.org/go/build" target="_blank"];
 "log" [label="log" color="palegreen" URL="https://godoc.org/log" target="_blank"];
 "os" [label="os" color="palegreen" URL="https://godoc.org/os" target="_blank"];
+"os/exec" [label="os/exec" color="palegreen" URL="https://godoc.org/os/exec" target="_blank"];
 "sort" [label="sort" color="palegreen" URL="https://godoc.org/sort" target="_blank"];
 "strings" [label="strings" color="palegreen" URL="https://godoc.org/strings" target="_blank"];
 }
