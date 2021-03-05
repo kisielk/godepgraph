@@ -6,6 +6,7 @@ import (
 	"go/build"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 )
@@ -28,6 +29,7 @@ var (
 	ignorePrefixes = flag.String("ignoreprefixes", "", "a comma-separated list of prefixes to ignore")
 	ignorePackages = flag.String("ignorepackages", "", "a comma-separated list of packages to ignore")
 	onlyPrefix     = flag.String("onlyprefixes", "", "a comma-separated list of prefixes to include")
+	onlyInSrc      = flag.Bool("onlyinsrc", false, "include packages only in current directory")
 	tagList        = flag.String("tags", "", "a comma-separated list of build tags to consider satisfied during the build")
 	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
 	withTests      = flag.Bool("withtests", false, "include test packages")
@@ -35,6 +37,8 @@ var (
 
 	buildTags    []string
 	buildContext = build.Default
+
+	parent string
 )
 
 func init() {
@@ -42,6 +46,7 @@ func init() {
 	flag.StringVar(ignorePrefixes, "p", "", "(alias for -ignoreprefixes) a comma-separated list of prefixes to ignore")
 	flag.StringVar(ignorePackages, "i", "", "(alias for -ignorepackages) a comma-separated list of packages to ignore")
 	flag.StringVar(onlyPrefix, "o", "", "(alias for -onlyprefixes) a comma-separated list of prefixes to include")
+	flag.BoolVar(onlyInSrc, "c", false, "(alias for -onlyinsrc) include packages only in current directory")
 	flag.BoolVar(withTests, "t", false, "(alias for -withtests) include test packages")
 	flag.IntVar(maxLevel, "l", 256, "(alias for -maxlevel) maximum level of the go dependency graph")
 	flag.BoolVar(withGoroot, "d", false, "(alias for -withgoroot) show dependencies of packages in the Go standard library")
@@ -79,6 +84,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to get cwd: %s", err)
 	}
+	parent = filepath.Dir(cwd)
 	for _, a := range args {
 		if err := processPackage(cwd, a, 0, "", *stopOnError); err != nil {
 			log.Fatal(err)
@@ -244,6 +250,11 @@ func isIgnored(pkg *build.Package) bool {
 	if *ignoreVendor && isVendored(pkg.ImportPath) {
 		return true
 	}
+
+	if *onlyInSrc && pkg.SrcRoot != parent {
+		return true
+	}
+
 	return ignored[normalizeVendor(pkg.ImportPath)] || (pkg.Goroot && *ignoreStdlib) || hasPrefixes(normalizeVendor(pkg.ImportPath), ignoredPrefixes)
 }
 
