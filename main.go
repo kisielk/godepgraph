@@ -38,7 +38,8 @@ var (
 	buildTags    []string
 	buildContext = build.Default
 
-	parent string
+	cwd  string
+	cwbd string
 )
 
 func init() {
@@ -80,11 +81,12 @@ func main() {
 	}
 	buildContext.BuildTags = buildTags
 
-	cwd, err := os.Getwd()
+	var err error
+	cwd, err = os.Getwd()
 	if err != nil {
 		log.Fatalf("failed to get cwd: %s", err)
 	}
-	parent = filepath.Dir(cwd)
+	cwbd = filepath.Base(cwd)
 	for _, a := range args {
 		if err := processPackage(cwd, a, 0, "", *stopOnError); err != nil {
 			log.Fatal(err)
@@ -251,7 +253,7 @@ func isIgnored(pkg *build.Package) bool {
 		return true
 	}
 
-	if *onlyInSrc && pkg.SrcRoot != parent {
+	if *onlyInSrc && pkg.SrcRoot+"/"+cwbd != cwd {
 		return true
 	}
 
