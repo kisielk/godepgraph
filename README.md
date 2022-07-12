@@ -14,6 +14,10 @@ For basic usage, just give the package path of interest as the first
 argument:
 
     godepgraph github.com/kisielk/godepgraph
+    
+If you intent to graph a go mod project, your package should be passed as a relative path:
+
+    godepgraph ./pkg/api
 
 The output is a graph in [Graphviz][graphviz] dot format. If you have the
 graphviz tools installed you can render it by piping the output to dot:
