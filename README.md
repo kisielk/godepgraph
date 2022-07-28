@@ -6,7 +6,7 @@ godepgraph is a program for generating a dependency graph of Go packages.
 
 ## Install
 
-    go get github.com/kisielk/godepgraph
+    go install github.com/kisielk/godepgraph
 
 ## Use
 
