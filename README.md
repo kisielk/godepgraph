@@ -68,9 +68,8 @@ list of prefixes:
 
 ## Example
 
-Here's some example output for a component of Gary Burd's [gopkgdoc][gopkgdoc] project:
+Here's some example output for godepgraph itself:
 
 ![Example output](example.png)
 
 [graphviz]: http://graphviz.org
-[gopkgdoc]: https://github.com/garyburd/gopkgdoc
