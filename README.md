@@ -66,6 +66,13 @@ list of prefixes:
 
     godepgraph -p github.com,launchpad.net bitbucket.org/foo/bar
 
+## Filter
+### Only in Current Directory
+
+Only include package in current directory:
+
+    godepgraph -c bitbucket.org/foo/bar
+
 ## Example
 
 Here's some example output for godepgraph itself:
