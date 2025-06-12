@@ -2,7 +2,7 @@
 
 godepgraph is a program for generating a dependency graph of Go packages.
 
-[![Build Status](https://travis-ci.org/kisielk/godepgraph.png?branch=master)](https://travis-ci.org/kisielk/godepgraph)
+[![Go](https://github.com/kisielk/godepgraph/actions/workflows/go.yml/badge.svg)](https://github.com/kisielk/godepgraph/actions/workflows/go.yml)
 
 ## Install
 
