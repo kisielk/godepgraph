@@ -15,6 +15,8 @@ var (
 	erroredPkgs map[string]bool
 	ids         map[string]string
 
+	nextId int
+
 	ignored = map[string]bool{
 		"C": true,
 	}
@@ -32,6 +34,7 @@ var (
 	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
 	withTests      = flag.Bool("withtests", false, "include test packages")
 	maxLevel       = flag.Int("maxlevel", 256, "max level of go dependency graph")
+	format         = flag.String("format", "dot", "output format of graph (dot, mermaid)")
 
 	buildTags    []string
 	buildContext = build.Default
@@ -75,6 +78,10 @@ func main() {
 	}
 	buildContext.BuildTags = buildTags
 
+	if !validFormat() {
+		log.Fatal("invalid output format")
+	}
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("failed to get cwd: %s", err)
@@ -85,16 +92,11 @@ func main() {
 		}
 	}
 
-	fmt.Println("digraph godep {")
-	if *horizontal {
-		fmt.Println(`rankdir="LR"`)
+	if *format == "mermaid" {
+		printMermaidHeader()
+	} else {
+		printDotHeader()
 	}
-	fmt.Print(`splines=ortho
-nodesep=0.4
-ranksep=0.8
-node [shape="box",style="rounded,filled"]
-edge [arrowsize="0.5"]
-`)
 
 	// sort packages
 	pkgKeys := []string{}
@@ -104,28 +106,20 @@ edge [arrowsize="0.5"]
 	sort.Strings(pkgKeys)
 
 	for _, pkgName := range pkgKeys {
+		useNumericIds := *format == "mermaid"
+
 		pkg := pkgs[pkgName]
-		pkgId := getId(pkgName)
+		pkgId := getId(pkgName, useNumericIds)
 
 		if isIgnored(pkg) {
 			continue
 		}
 
-		var color string
-		switch {
-		case pkg.Goroot:
-			color = "palegreen"
-		case len(pkg.CgoFiles) > 0:
-			color = "darkgoldenrod1"
-		case isVendored(pkg.ImportPath):
-			color = "palegoldenrod"
-		case hasBuildErrors(pkg):
-			color = "red"
-		default:
-			color = "paleturquoise"
+		if *format == "mermaid" {
+      printMermaidNode(pkg, pkgId, pkgName)
+		} else {
+			printGraphvizNode(pkg, pkgId, pkgName)
 		}
-
-		fmt.Printf("%s [label=\"%s\" color=\"%s\" URL=\"%s\" target=\"_blank\"];\n", pkgId, pkgName, color, pkgDocsURL(pkgName))
 
 		// Don't render imports from packages in Goroot
 		if pkg.Goroot && !*withGoroot {
@@ -138,11 +132,18 @@ edge [arrowsize="0.5"]
 				continue
 			}
 
-			impId := getId(imp)
-			fmt.Printf("%s -> %s;\n", pkgId, impId)
+			impId := getId(imp, useNumericIds)
+			if *format == "mermaid" {
+				printMermaidLink(pkgId, impId)
+			} else {
+				printGraphvizLink(pkgId, impId)
+			}
 		}
 	}
-	fmt.Println("}")
+
+	if *format == "dot" {
+		fmt.Println("}")
+	}
 }
 
 func pkgDocsURL(pkgName string) string {
@@ -212,16 +213,21 @@ func getImports(pkg *build.Package) []string {
 	return imports
 }
 
-func deriveNodeID(packageName string) string {
+func deriveNodeID(packageName string, numeric bool) string {
+	if numeric {
+		nextId = nextId + 1
+		return fmt.Sprintf("%d", nextId)
+	}
+
 	//TODO: improve implementation?
 	id := "\"" + packageName + "\""
 	return id
 }
 
-func getId(name string) string {
+func getId(name string, numeric bool) string {
 	id, ok := ids[name]
 	if !ok {
-		id = deriveNodeID(name)
+		id = deriveNodeID(name, numeric)
 		ids[name] = id
 	}
 	return id
@@ -274,4 +280,86 @@ func isVendored(path string) bool {
 func normalizeVendor(path string) string {
 	pieces := strings.Split(path, "vendor/")
 	return pieces[len(pieces)-1]
+}
+
+func validFormat() bool {
+	switch *format {
+	case "dot", "mermaid":
+		return true
+	default:
+		return false
+	}
+}
+
+func printDotHeader() {
+	fmt.Println("digraph godep {")
+	if *horizontal {
+		fmt.Println(`rankdir="LR"`)
+	}
+	fmt.Println(`splines=ortho
+nodesep=0.4
+ranksep=0.8
+node [shape="box",style="rounded,filled"]
+edge [arrowsize="0.5"]`)
+}
+
+func printMermaidHeader() {
+	if *horizontal {
+		fmt.Println("flowchart LR")
+	} else {
+		fmt.Println("flowchart TD")
+	}
+
+	fmt.Println("classDef goroot fill:#1B1")
+	fmt.Println("classDef cgofiles fill:#C52")
+	fmt.Println("classDef vendored fill:#888")
+	fmt.Println("classDef buildErrs fill:#811")
+	fmt.Println()
+}
+
+func printGraphvizNode(pkg *build.Package, id string, name string) {
+	var color string
+	switch {
+	case pkg.Goroot:
+		color = "palegreen"
+	case len(pkg.CgoFiles) > 0:
+		color = "darkgoldenrod1"
+	case isVendored(pkg.ImportPath):
+		color = "palegoldenrod"
+	case hasBuildErrors(pkg):
+		color = "red"
+	default:
+		color = "paleturquoise"
+	}
+
+	fmt.Printf("%s [label=\"%s\" color=\"%s\" URL=\"%s\" target=\"_blank\"];\n", id, name, color, pkgDocsURL(name))
+}
+
+func printMermaidNode(pkg *build.Package, id string, name string) {
+	var classname string
+	switch {
+	case pkg.Goroot:
+		classname = "goroot"
+	case len(pkg.CgoFiles) > 0:
+		classname = "cgofiles"
+	case isVendored(pkg.ImportPath):
+		classname = "vendored"
+	case hasBuildErrors(pkg):
+		classname = "buildErrs"
+	}
+
+	fmt.Printf("%s[%s]\n", id, name)
+	fmt.Printf("click %s href %q\n", id, pkgDocsURL(name))
+
+	if classname != "" {
+		fmt.Printf("class %s %s\n", id, classname)
+	}
+}
+
+func printGraphvizLink(pkgId string, impId string) {
+	fmt.Printf("%s -> %s;\n", pkgId, impId)
+}
+
+func printMermaidLink(pkgId string, impId string) {
+	fmt.Printf("%s --> %s\n", pkgId, impId)
 }
