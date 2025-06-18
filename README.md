@@ -15,14 +15,18 @@ argument:
 
     godepgraph github.com/kisielk/godepgraph
     
-If you intent to graph a go mod project, your package should be passed as a relative path:
+If you intend to graph a go mod project, your package should be passed as a relative path:
 
     godepgraph ./pkg/api
 
-The output is a graph in [Graphviz][graphviz] dot format. If you have the
+The default output is a graph in [Graphviz][graphviz] dot format. If you have the
 graphviz tools installed you can render it by piping the output to dot:
 
     godepgraph github.com/kisielk/godepgraph | dot -Tpng -o godepgraph.png
+
+You can also generate [Mermaid](https://mermaid.js.org/) graphs:
+
+    godepgraph github.com/kisielk/godepgraph -format mermaid > graph.mmd
 
 By default godepgraph will display packages in the standard library in the
 graph, though it will not delve in to their dependencies.

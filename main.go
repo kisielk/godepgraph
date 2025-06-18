@@ -116,7 +116,7 @@ func main() {
 		}
 
 		if *format == "mermaid" {
-      printMermaidNode(pkg, pkgId, pkgName)
+			printMermaidNode(pkg, pkgId, pkgName)
 		} else {
 			printGraphvizNode(pkg, pkgId, pkgName)
 		}
@@ -310,10 +310,10 @@ func printMermaidHeader() {
 		fmt.Println("flowchart TD")
 	}
 
-	fmt.Println("classDef goroot fill:#1B1")
-	fmt.Println("classDef cgofiles fill:#C52")
-	fmt.Println("classDef vendored fill:#888")
-	fmt.Println("classDef buildErrs fill:#811")
+	fmt.Println("classDef goroot fill:#1D4,color:white")
+	fmt.Println("classDef cgofiles fill:#D52,color:white")
+	fmt.Println("classDef vendored fill:#D90,color:white")
+	fmt.Println("classDef buildErrs fill:#C10,color:white")
 	fmt.Println()
 }
 
