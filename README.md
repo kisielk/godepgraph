@@ -74,6 +74,57 @@ list of prefixes:
 
 Here's some example output for godepgraph itself:
 
+Using `godepgraph -format mermaid github.com/kisielk/godepgraph`:
+
+```mermaid
+flowchart TD
+
+classDef goroot fill:#1D4,color:white
+classDef cgofiles fill:#D52,color:white
+classDef vendored fill:#D90,color:white
+classDef buildErrs fill:#C10,color:white
+
+1[flag]
+click 1 href "https://godoc.org/flag"
+class 1 goroot
+
+2[fmt]
+click 2 href "https://godoc.org/fmt"
+class 2 goroot
+
+3[github.com/kisielk/godepgraph]
+click 3 href "https://godoc.org/github.com/kisielk/godepgraph"
+3 --> 1
+3 --> 2
+3 --> 4
+3 --> 5
+3 --> 6
+3 --> 7
+3 --> 8
+
+4[go/build]
+click 4 href "https://godoc.org/go/build"
+class 4 goroot
+
+5[log]
+click 5 href "https://godoc.org/log"
+class 5 goroot
+
+6[os]
+click 6 href "https://godoc.org/os"
+class 6 goroot
+
+7[sort]
+click 7 href "https://godoc.org/sort"
+class 7 goroot
+
+8[strings]
+click 8 href "https://godoc.org/strings"
+class 8 goroot
+```
+
+Using `godepgraph -format graphviz github.com/kisielk/godepgraph`:
+
 ![Example output](example.png)
 
 [graphviz]: http://graphviz.org
