@@ -10,10 +10,16 @@ import (
 	"strings"
 )
 
+type graphPrinter interface {
+	writeHeader(hLayout bool)
+	writeNode(pkgName string, attrs *build.Package)
+	writeEdge(u string, v string)
+	writeEnd()
+}
+
 var (
 	pkgs        map[string]*build.Package
 	erroredPkgs map[string]bool
-	ids         map[string]string
 
 	ignored = map[string]bool{
 		"C": true,
@@ -32,6 +38,7 @@ var (
 	horizontal     = flag.Bool("horizontal", false, "lay out the dependency graph horizontally instead of vertically")
 	withTests      = flag.Bool("withtests", false, "include test packages")
 	maxLevel       = flag.Int("maxlevel", 256, "max level of go dependency graph")
+	format         = flag.String("format", "dot", "output format of graph (dot, mermaid)")
 
 	buildTags    []string
 	buildContext = build.Default
@@ -50,7 +57,6 @@ func init() {
 func main() {
 	pkgs = make(map[string]*build.Package)
 	erroredPkgs = make(map[string]bool)
-	ids = make(map[string]string)
 	flag.Parse()
 
 	args := flag.Args()
@@ -75,6 +81,11 @@ func main() {
 	}
 	buildContext.BuildTags = buildTags
 
+	printer, err := getPrinter()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	cwd, err := os.Getwd()
 	if err != nil {
 		log.Fatalf("failed to get cwd: %s", err)
@@ -85,16 +96,7 @@ func main() {
 		}
 	}
 
-	fmt.Println("digraph godep {")
-	if *horizontal {
-		fmt.Println(`rankdir="LR"`)
-	}
-	fmt.Print(`splines=ortho
-nodesep=0.4
-ranksep=0.8
-node [shape="box",style="rounded,filled"]
-edge [arrowsize="0.5"]
-`)
+	printer.writeHeader(*horizontal)
 
 	// sort packages
 	pkgKeys := []string{}
@@ -105,27 +107,12 @@ edge [arrowsize="0.5"]
 
 	for _, pkgName := range pkgKeys {
 		pkg := pkgs[pkgName]
-		pkgId := getId(pkgName)
 
 		if isIgnored(pkg) {
 			continue
 		}
 
-		var color string
-		switch {
-		case pkg.Goroot:
-			color = "palegreen"
-		case len(pkg.CgoFiles) > 0:
-			color = "darkgoldenrod1"
-		case isVendored(pkg.ImportPath):
-			color = "palegoldenrod"
-		case hasBuildErrors(pkg):
-			color = "red"
-		default:
-			color = "paleturquoise"
-		}
-
-		fmt.Printf("%s [label=\"%s\" color=\"%s\" URL=\"%s\" target=\"_blank\"];\n", pkgId, pkgName, color, pkgDocsURL(pkgName))
+		printer.writeNode(pkgName, pkg)
 
 		// Don't render imports from packages in Goroot
 		if pkg.Goroot && !*withGoroot {
@@ -138,11 +125,11 @@ edge [arrowsize="0.5"]
 				continue
 			}
 
-			impId := getId(imp)
-			fmt.Printf("%s -> %s;\n", pkgId, impId)
+			printer.writeEdge(pkgName, imp)
 		}
 	}
-	fmt.Println("}")
+
+	printer.writeEnd()
 }
 
 func pkgDocsURL(pkgName string) string {
@@ -212,21 +199,6 @@ func getImports(pkg *build.Package) []string {
 	return imports
 }
 
-func deriveNodeID(packageName string) string {
-	//TODO: improve implementation?
-	id := "\"" + packageName + "\""
-	return id
-}
-
-func getId(name string) string {
-	id, ok := ids[name]
-	if !ok {
-		id = deriveNodeID(name)
-		ids[name] = id
-	}
-	return id
-}
-
 func hasPrefixes(s string, prefixes []string) bool {
 	for _, p := range prefixes {
 		if strings.HasPrefix(s, p) {
@@ -259,14 +231,6 @@ func hasBuildErrors(pkg *build.Package) bool {
 	return v
 }
 
-func debug(args ...interface{}) {
-	fmt.Fprintln(os.Stderr, args...)
-}
-
-func debugf(s string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, s, args...)
-}
-
 func isVendored(path string) bool {
 	return strings.Contains(path, "/vendor/")
 }
@@ -274,4 +238,15 @@ func isVendored(path string) bool {
 func normalizeVendor(path string) string {
 	pieces := strings.Split(path, "vendor/")
 	return pieces[len(pieces)-1]
+}
+
+func getPrinter() (graphPrinter, error) {
+	switch *format {
+	case "dot":
+		return newGraphvizPrinter(), nil
+	case "mermaid":
+		return newMermaidPrinter(), nil
+	default:
+		return nil, fmt.Errorf("invalid format flag %q, must be: dot, mermaid", *format)
+	}
 }
