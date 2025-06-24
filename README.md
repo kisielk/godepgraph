@@ -26,7 +26,7 @@ graphviz tools installed you can render it by piping the output to dot:
 
 You can also generate [Mermaid](https://mermaid.js.org/) graphs:
 
-    godepgraph github.com/kisielk/godepgraph -format mermaid > graph.mmd
+    godepgraph -format mermaid github.com/kisielk/godepgraph > graph.mmd
 
 By default godepgraph will display packages in the standard library in the
 graph, though it will not delve in to their dependencies.
