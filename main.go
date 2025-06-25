@@ -6,6 +6,7 @@ import (
 	"go/build"
 	"log"
 	"os"
+	"os/exec"
 	"sort"
 	"strings"
 )
@@ -90,8 +91,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to get cwd: %s", err)
 	}
-	for _, a := range args {
-		if err := processPackage(cwd, a, 0, "", *stopOnError); err != nil {
+
+	cmdArgs := []string{"list"}
+	if *tagList != "" {
+		cmdArgs = append(cmdArgs, "-tags", *tagList)
+	}
+	cmdArgs = append(cmdArgs, args...)
+
+	cmd := exec.Command("go", cmdArgs...)
+	cmd.Env = append(cmd.Env, os.Environ()...)
+	cmd.Stderr = os.Stderr
+	out, err := cmd.Output()
+	if err != nil {
+		log.Fatal(err)
+	}
+	resolved := strings.Fields(string(out))
+
+	for _, pkg := range resolved {
+		if err := processPackage(cwd, pkg, 0, "", *stopOnError); err != nil {
 			log.Fatal(err)
 		}
 	}
